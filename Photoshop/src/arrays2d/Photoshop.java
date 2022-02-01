@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
@@ -81,9 +82,8 @@ public class Photoshop extends Component {
     // the pixel's rgb value. 
     // use this predefined color as the rgb value for the changed image.
     public void simplify() {
-    
-    		// the list of colors to compare to. Feel free to change/add colors
-    		Color[] colorList = {Color.BLUE, Color.RED,Color.ORANGE, Color.MAGENTA,
+		// the list of colors to compare to. Feel free to change/add colors
+		Color[] colorList = {Color.BLUE, Color.RED,Color.ORANGE, Color.MAGENTA,
                 Color.BLACK, Color.WHITE, Color.GREEN, Color.YELLOW, Color.CYAN};
         outputName = "simplified_" + outputName;
         for (int i=0; i<pixels.length; i++) {
@@ -100,52 +100,101 @@ public class Photoshop extends Component {
         }
     }
     
-    public void kmeans() {
-    	for (int count=0; count<300; count++) {
-	    	int prev=0; 
-	    	Color[][] cList=new Color[9][2];
-	    	Color[][][] temp=new Color[pixels.length][pixels[0].length][2];
+//    public Color[] get(int n) {
+//    	outputName = "colors_" + outputName;
+//    	Color[] clist=new Color[n];
+//    	int min=Math.min(pixels.length, pixels[0].length), max=Math.max(pixels.length, pixels[0].length), curr=1, c=0, prev=0;
+//    	for (int i=0; min>1; ) {
+//    		c=(int) Math.sqrt(n);
+//    		int sqrs=max/min, div=c/(sqrs)+1;
+//    		prev=i-prev;
+//    		if (curr>sqrs) curr=1;
+//    		for (int j=1; j<=div; j++) {
+//    			for (int k=1; k<=div&&i<clist.length; k++, i++) {
+//    				clist[i]=pixels[(j*(min*curr/div)-1)>pixels.length ? (j*(min/div)-1): (j*(min*curr/div)-1)][(k*(min*curr/div)-1)>pixels[0].length ? (k*(min/div)-1): (k*(min*curr/div)-1)];
+//    				System.out.println((j*(min*curr/div)-1)>pixels.length ? (j*(min/div)-1): (j*(min*curr/div)-1)+" "+((k*(min*curr/div)-1)>pixels[0].length ? (k*(min/div)-1): (k*(min*curr/div)-1)));
+//    			}
+//    		}
+//    		n-=prev; System.out.println(n+" "+i); curr++; if (n>0) continue;
+//    		if (max-min*(sqrs)==0) break;
+//    		min=Math.min(min, max-min*(sqrs));
+//    		max=Math.max(min, max-min*(sqrs));
+//    	}
+//    	System.out.println(Arrays.toString(clist));
+//    	return clist;
+//    }
+    
+    public void kmeans(int n) {
+    	outputName = "kmeans_" + outputName;
+    	if (n==0) return;
+    	int prev=0; 
+    	Color[][] cList=new Color[2][n];
+    	Color[][][] temp=new Color[pixels.length][pixels[0].length][2];
+    	int ind=0;
+    	for (int i=0; i<(int)Math.sqrt(n); i++) {
+    		for (int j=0; j<(int)Math.sqrt(n); j++, ind++) {
+    			cList[0][ind]=pixels[(int)(i*(pixels.length/Math.sqrt(n)))][(int)(j*(pixels[0].length/Math.sqrt(n)))];
+    			System.out.println((int)(i*(pixels.length/Math.sqrt(n)))+" "+(int)(j*(pixels[0].length/Math.sqrt(n))));
+    		}
+    	}
+    	while (ind<n) {
+    		cList[0][ind]=new Color((int)(Math.random()*255), (int) (Math.random()*255),(int) (Math.random()*255)); ind++;
+    	}
+    	
+    	for (int i=0; i<temp.length; i++) {
+    		for (int j=0; j<temp[i].length; j++) {
+    			temp[i][j][0]=pixels[i][j];
+    		} //makes temp [][][0]=pixels[][]
+    	}
+    	System.out.println();
+    	int c=0;
+    	for (int count=0; c!=cList[0].length; count++) {
+    		System.out.print(count+" ");
 	    	
-	    	for (int i=0; i<cList.length; i++) {
-	    		cList[i][0]=pixels[pixels.length/((i+3)/3)-1][pixels[0].length/(i%3+1)-1];
-	    	}
-	    	
+    		c=0;
 	    	for (int i=0; i<temp.length; i++) {
 	    		for (int j=0; j<temp[i].length; j++) {
-	    			double t=distance(pixels[i][j], cList[0][0]); int index=0;
-	    			for (int k=1; k<cList.length; k++) {
-	    				t=distance(pixels[i][j], cList[k][0]);
-	    				index=k;
+	    			double t=distance(temp[i][j][count%2], cList[0][0]); int index=0;
+					for (int k=1; k<cList[count%2].length; k++) {
+	    				if (distance(temp[i][j][count%2], cList[count%2][k])<t) {
+		    				t=distance(temp[i][j][count%2], cList[count%2][k]);
+		    				index=k;
+	    				}
 	    			}
-	    			temp[i][j][0]=cList[index][0];
-	    			temp[i][j][1]=pixels[i][j];
+	    			temp[i][j][(count+1)%2]=temp[i][j][count%2];
+	    			temp[i][j][count%2]=cList[count%2][index];
 	    		}
 	    	}
-	    	int[][] avg=new int[9][4];
+	    	int[][] avg=new int[n][4];
 	    	for (int i=0; i<temp.length; i++) {
-	    		for (int j=0; j<temp.length; j++) {
-	    			for (int k=0; k<cList.length; k++) {
-	    				if (temp[i][j][0]==cList[k][0]) {
-	    					avg[k][0]+=temp[i][j][1].getRed();
-	    					avg[k][1]+=temp[i][j][1].getGreen();
-	    					avg[k][2]+=temp[i][j][1].getBlue();
+	    		for (int j=0; j<temp[i].length; j++) {
+	    			for (int k=0; k<cList[0].length; k++) {
+	    				if (temp[i][j][count%2]==cList[count%2][k]) {
+	    					avg[k][0]+=temp[i][j][(count+1)%2].getRed();
+	    					avg[k][1]+=temp[i][j][(count+1)%2].getGreen();
+	    					avg[k][2]+=temp[i][j][(count+1)%2].getBlue();
 	    					avg[k][3]++;
 	    					break;
 	    				}
 	    			}
 	    		}
 	    	}
-	    	int c=0;
-	    	for (int i=0; i<cList.length; i++) {
+	    	for (int i=0; i<cList[0].length; i++) {
 	    		if (avg[i][3]!=0)
-	    			cList[i][1]=new Color(avg[i][0]/avg[i][3], avg[i][1]/avg[i][3], avg[i][2]/avg[i][3]);
+	    			cList[(count+1)%2][i]=new Color(avg[i][0]/avg[i][3], avg[i][1]/avg[i][3], avg[i][2]/avg[i][3]);
 	    		else 
-	    			cList[i][1]=Color.black;
-	    		if (distance(cList[i][0],cList[i][1])<10) {
+	    			cList[(count+1)%2][i]=Color.black;
+	    		if (distance(cList[count%2][i],cList[(count+1)%2][i])<1) {
 	    			c++;
 	    		}
 	    	}
-	    	if (c==cList.length) break;
+    		prev=count;
+    	}
+    	
+    	for (int i=0; i<pixels.length; i++) {
+    		for (int j=0; j<pixels[i].length; j++) {
+    			pixels[i][j]=temp[i][j][prev%2];
+    		}
     	}
     }
     
@@ -179,8 +228,7 @@ public class Photoshop extends Component {
         		}
         		
         		else {
-        			System.out.println(i+" "+j);
-        			int x, y=1;
+        			int x = 0, y=0;
         			for (x=Math.max(0, i-n); x<Math.min(pixels.length, i+n); x++) {
         				for (y=Math.max(0, j-n); y<Math.min(pixels[i].length, j+n); y++) {
         					r+=pixels[x][y].getRed();
@@ -189,117 +237,10 @@ public class Photoshop extends Component {
         				}
         			}
         			int x1=Math.max(0, i-n), y1=Math.max(0, j-n);
-        			int div=Math.abs((x-x1)*(y-y1));
+        			int div=(x-x1)*(y-y1);
         			temp[i][j]=new Color(r/div, g/div, b/div);
         		}
-        		
-//        		else {
-//        			int i1=i, i2=i-(pixels.length-1), j1=j, j2=j-(pixels[i].length-1); 
-//        			
-//        			
-//        			if (i1<n) { //top edge
-//        				if (j1<n) { //left corner
-//        					for (int x=i-i1; x<i+n; x++) {
-//        						for (int y=j-j1; y<j+n; y++) {
-//        							r+=pixels[x][y].getRed();
-//        							g+=pixels[x][y].getGreen();
-//        							b+=pixels[x][y].getBlue();
-//        						} 
-//            				}
-//        					int iMin=Math.min(i1, i2*-1), jMin=Math.min(j1,j2*-1);
-//                			int div=(n+1+Math.min(Math.abs(iMin), n))*(n+1+Math.min(Math.abs(jMin), n));
-//            				temp[i][j]=new Color(r/div, g/div, b/div);
-//        				}
-//        				else if (j2>-n&&j2<=0) { //right corner
-//        					for (int x=i-i1; x<i+n; x++) {
-//        						for (int y=j-j2; y>j-n; y--) {
-//        							r+=pixels[x][y].getRed();
-//        							g+=pixels[x][y].getGreen();
-//        							b+=pixels[x][y].getBlue();
-//        						} 
-//            				}
-//        					int iMin=Math.min(i1, i2*-1), jMin=Math.min(j1,j2*-1);
-//                			int div=(n+1+Math.min(Math.abs(iMin), n))*(n+1+Math.min(Math.abs(jMin), n));
-//            				temp[i][j]=new Color(r/div, g/div, b/div);
-//        				}
-//        				else {
-//        					for (int x=i-i1; x<i+n; x++) {
-//        						for (int y=j+n; y>j-n; y--) {
-//        							r+=pixels[x][y].getRed();
-//        							g+=pixels[x][y].getGreen();
-//        							b+=pixels[x][y].getBlue();
-//        						} 
-//        					}
-//        					int iMin=Math.min(i1, i2*-1), jMin=Math.min(j1,j2*-1);
-//                			int div=(n+1+Math.min(Math.abs(iMin), n))*(n+1+Math.min(Math.abs(jMin), n));
-//            				temp[i][j]=new Color(r/div, g/div, b/div);
-//        				}
-//        			}
-//        			
-//        			else if (i2>-n){ //bottom edge
-//    					if (j1<n) { //left corner
-//    						for (int x=i-i2; x>i-n; x--) {
-//    							for (int y=j-j1; y<j+n; y++) {
-//        							r+=pixels[x][y].getRed();
-//        							g+=pixels[x][y].getGreen();
-//        							b+=pixels[x][y].getBlue();
-//        						} 
-//    						}
-//                			int div=(n+1-i2)*(n+1+j1);
-//            				temp[i][j]=new Color(r/div, g/div, b/div);
-//        				}
-//        				else if (j2>-n&&j2<=0){ //right corner
-//        					for (int x=i-i2; x>i-n; x--) {
-//		    					for (int y=j-j2; y>j-n; y--) {
-//									r+=pixels[x][y].getRed();
-//									g+=pixels[x][y].getGreen();
-//									b+=pixels[x][y].getBlue();
-//								} 
-//        					}
-//                			int div=(n+1-i2)*(n+1-j2);
-//            				temp[i][j]=new Color(r/div, g/div, b/div);
-//        				}
-//        				else {
-//        					for (int x=i-i2; x>i-n; x--) {
-//		    					for (int y=j+n; y>j-n; y--) {
-//									r+=pixels[x][y].getRed();
-//									g+=pixels[x][y].getGreen();
-//									b+=pixels[x][y].getBlue();
-//								} 
-//        					}
-//                			int div=(n+1-i2)*(2*n+1);
-//            				temp[i][j]=new Color(r/div, g/div, b/div);
-//        				}
-//        			}
-//        			
-//        			else {
-//        				if (j1<n) { //left edge
-//        					for (int x=i+n; x>i-n; x--) {
-//        						for (int y=j-j1; y<j+n; y++) {
-//        							r+=pixels[x][y].getRed();
-//        							g+=pixels[x][y].getGreen();
-//        							b+=pixels[x][y].getBlue();
-//        						} 
-//        					}
-//        					int iMin=Math.min(i1, i2*-1), jMin=Math.min(j1,j2*-1);
-//                			int div=(n+1+Math.min(Math.abs(iMin), n))*(n+1+Math.min(Math.abs(jMin), n));
-//            				temp[i][j]=new Color(r/div, g/div, b/div);
-//        				}
-//        				else if (j2>-n&&j2<=0){ //right edge
-//        					for (int x=i+n; x>i-n; x--) {
-//        						for (int y=j-j2; y>j-n; y--) {
-//									r+=pixels[x][y].getRed();
-//									g+=pixels[x][y].getGreen();
-//									b+=pixels[x][y].getBlue();
-//								} 
-//        					}
-//        					int iMin=Math.min(i1, i2*-1), jMin=Math.min(j1,j2*-1);
-//                			int div=(n+1+Math.min(Math.abs(iMin), n))*(n+1+Math.min(Math.abs(jMin), n));
-//            				temp[i][j]=new Color(r/div, g/div, b/div);
-//        				}
-//        			}
-//        		}
-        	} 
+        	}
         }
 		for (int i=0; i<pixels.length; i++) {
         	for (int j=0; j<pixels[i].length; j++) {
@@ -350,21 +291,11 @@ public class Photoshop extends Component {
 			temp[i]=new Color[pixels[i].length];
         	for (int j=1; j<pixels[i].length-1; j++) { //goes through every pixel
         		int r=0,g=0,b=0;
-        		r+=pixels[i-1][j].getRed();
-        		g+=pixels[i-1][j].getGreen();
-        		b+=pixels[i-1][j].getBlue();
-        		r+=pixels[i+1][j].getRed();
-        		g+=pixels[i+1][j].getGreen();
-        		b+=pixels[i+1][j].getBlue();
-        		r+=pixels[i][j-1].getRed();
-        		g+=pixels[i][j-1].getGreen();
-        		b+=pixels[i][j-1].getBlue();
-        		r+=pixels[i][j+1].getRed();
-        		g+=pixels[i][j+1].getGreen();
-        		b+=pixels[i][j+1].getBlue();
-        		r*=-1;
-        		g*=-1;
-        		b*=-1;
+        		r+=pixels[i-1][j].getRed(); g+=pixels[i-1][j].getGreen(); b+=pixels[i-1][j].getBlue();
+        		r+=pixels[i+1][j].getRed(); g+=pixels[i+1][j].getGreen(); b+=pixels[i+1][j].getBlue();
+        		r+=pixels[i][j-1].getRed(); g+=pixels[i][j-1].getGreen(); b+=pixels[i][j-1].getBlue();
+        		r+=pixels[i][j+1].getRed(); g+=pixels[i][j+1].getGreen(); b+=pixels[i][j+1].getBlue();
+        		r*=-1; g*=-1; b*=-1;
         		r+=pixels[i][j].getRed()*5;
         		g+=pixels[i][j].getGreen()*5;
         		b+=pixels[i][j].getBlue()*5;
@@ -380,16 +311,17 @@ public class Photoshop extends Component {
     
     public void rotate() {
     	 outputName = "rotated_" + outputName;
-         Color[][]temp=new Color[pixels[0].length][pixels.length]; 
-         for (int i=0; i<temp.length; i++) {
-        	 for (int j=0; j<temp[i].length; j++) {
-        		 
+         Color[][]temp=pixels;
+         pixels=new Color[temp[0].length][temp.length]; 
+         for (int i=0; i<pixels.length; i++) {
+        	 for (int j=temp.length-1, k=0; j>=0; j--, k++) {
+        		 pixels[i][k]=temp[j][i];
         	 }
          }
     }
    
     
-    // *************** DON'T MESS WITH THE BELOW CODE **************** //
+    // *************** I MESSED WITH THE BELOW CODE :D **************** //
     
     // feel free to check it out, but don't change it unless you've consulted 
     // with Mr. David and understand what the code's doing
@@ -410,8 +342,6 @@ public class Photoshop extends Component {
 		try {
 			image = ImageIO.read(my_file);
 		
-	        BufferedImage new_image = new BufferedImage(image.getWidth(),
-	                        image.getHeight(), BufferedImage.TYPE_INT_ARGB);
 	        create_pixel_array(image);
 			outputName = my_file.getName();
 			
@@ -440,6 +370,18 @@ public class Photoshop extends Component {
 		        			Method m = getClass().getDeclaredMethod(action, int.class);
 		        			m.invoke(this, blurness);
 		    			}
+		    			else if (action.equals("kmeans")) {
+		    				System.out.println("enter number of colors for kmeans");
+		    				int kmeansness = in.nextInt();
+		        			Method m = getClass().getDeclaredMethod(action, int.class);
+		        			m.invoke(this, kmeansness);
+		    			}
+		    			else if (action.equals("get")) {
+		    				System.out.println("enter number of colors");
+		    				int number = in.nextInt();
+		        			Method m = getClass().getDeclaredMethod(action, int.class);
+		        			m.invoke(this, number);
+		    			}
 		    			else {
 		        			Method m = getClass().getDeclaredMethod(action);
 		        			m.invoke(this, new Object[0]);
@@ -454,8 +396,10 @@ public class Photoshop extends Component {
 	    			
 	    			action = in.next().toLowerCase();
 	    		} 
+			
 	        in.close();
-	        
+	        BufferedImage new_image = new BufferedImage(pixels[0].length,
+                    pixels.length, BufferedImage.TYPE_INT_ARGB);
 	        // turns our 2d array of colors into a new png file
 	        create_new_image(new_image);
 	        File output_file = new File("Images/" + outputName);
@@ -480,6 +424,8 @@ public class Photoshop extends Component {
     }
 
     public void create_new_image(BufferedImage new_image) {
+    	w=new_image.getWidth();
+    	h=new_image.getHeight();
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
             		new_image.setRGB(j, i, pixels[i][j].getRGB());
