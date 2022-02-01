@@ -58,9 +58,9 @@ public class Photoshop extends Component {
 		else { //vertical flip
 			Color[] temp=new Color[pixels[0].length];
 			for(int i=0;i<pixels.length/2;i++) { //go through half the rows
-				temp=pixels[i]; //set temp variable to current pixel color
-				pixels[i]=pixels[pixels.length-1-i]; //change pixel color to pixel in the same place on the right half of the screen
-				pixels[pixels.length-1-i]=temp; //sets the right pixel to the original current pixel color
+				temp=pixels[i]; //set temp to be row i
+				pixels[i]=pixels[pixels.length-1-i]; //sets row i to the row across from row i
+				pixels[pixels.length-1-i]=temp; //sets the row that was changed to be row i (from temp)
 			}
 		}
     }
@@ -87,113 +87,86 @@ public class Photoshop extends Component {
                 Color.BLACK, Color.WHITE, Color.GREEN, Color.YELLOW, Color.CYAN};
         outputName = "simplified_" + outputName;
         for (int i=0; i<pixels.length; i++) {
-        	for (int j=0; j<pixels[i].length; j++) {
+        	for (int j=0; j<pixels[i].length; j++) { //goes through every pixel
         		double t=distance(pixels[i][j], colorList[0]); int index=0;
-        		for (int k=1; k<colorList.length; k++) {
-        			if (distance(pixels[i][j], colorList[k])<t) {
-        				t=distance(pixels[i][j], colorList[k]);
-        				index=k;
+        		for (int k=1; k<colorList.length; k++) { //goes through color list
+        			if (distance(pixels[i][j], colorList[k])<t) { //finds the minimum distance between all colors
+        				t=distance(pixels[i][j], colorList[k]); //sets new distance
+        				index=k; //saves index of color in the colorList
         			}
         		}
-        		pixels[i][j]=colorList[index];
+        		pixels[i][j]=colorList[index]; //sets the pixel to be the closest color
         	}
         }
     }
     
-//    public Color[] get(int n) {
-//    	outputName = "colors_" + outputName;
-//    	Color[] clist=new Color[n];
-//    	int min=Math.min(pixels.length, pixels[0].length), max=Math.max(pixels.length, pixels[0].length), curr=1, c=0, prev=0;
-//    	for (int i=0; min>1; ) {
-//    		c=(int) Math.sqrt(n);
-//    		int sqrs=max/min, div=c/(sqrs)+1;
-//    		prev=i-prev;
-//    		if (curr>sqrs) curr=1;
-//    		for (int j=1; j<=div; j++) {
-//    			for (int k=1; k<=div&&i<clist.length; k++, i++) {
-//    				clist[i]=pixels[(j*(min*curr/div)-1)>pixels.length ? (j*(min/div)-1): (j*(min*curr/div)-1)][(k*(min*curr/div)-1)>pixels[0].length ? (k*(min/div)-1): (k*(min*curr/div)-1)];
-//    				System.out.println((j*(min*curr/div)-1)>pixels.length ? (j*(min/div)-1): (j*(min*curr/div)-1)+" "+((k*(min*curr/div)-1)>pixels[0].length ? (k*(min/div)-1): (k*(min*curr/div)-1)));
-//    			}
-//    		}
-//    		n-=prev; System.out.println(n+" "+i); curr++; if (n>0) continue;
-//    		if (max-min*(sqrs)==0) break;
-//    		min=Math.min(min, max-min*(sqrs));
-//    		max=Math.max(min, max-min*(sqrs));
-//    	}
-//    	System.out.println(Arrays.toString(clist));
-//    	return clist;
-//    }
-    
-    public void kmeans(int n) {
+    public void kmeans(int n) { //takes n as input and produces an image with n colors that are averaged multiple times over all the colors in the cluster
     	outputName = "kmeans_" + outputName;
-    	if (n==0) return;
-    	int prev=0; 
-    	Color[][] cList=new Color[2][n];
-    	Color[][][] temp=new Color[pixels.length][pixels[0].length][2];
+    	if (n<=0) return; //if color number isn't positive it kills the method to avoid errors
+    	int prev=0; //initializes prev which will be used to keep track of count later on
+    	Color[][] cList=new Color[2][n]; //creates a 2 by n 2d array of colors to alternate between them every cycle as a color list
+    	Color[][][] temp=new Color[pixels.length][pixels[0].length][2]; //creates a 3d array that again has 2 different templates for pixels 
     	int ind=0;
     	for (int i=0; i<(int)Math.sqrt(n); i++) {
     		for (int j=0; j<(int)Math.sqrt(n); j++, ind++) {
     			cList[0][ind]=pixels[(int)(i*(pixels.length/Math.sqrt(n)))][(int)(j*(pixels[0].length/Math.sqrt(n)))];
-    			System.out.println((int)(i*(pixels.length/Math.sqrt(n)))+" "+(int)(j*(pixels[0].length/Math.sqrt(n))));
-    		}
+    		} //splits the image into a square grid and gets the next smallest square amount of colors
     	}
     	while (ind<n) {
     		cList[0][ind]=new Color((int)(Math.random()*255), (int) (Math.random()*255),(int) (Math.random()*255)); ind++;
-    	}
+    	} //sets the rest of the colors to random values 
     	
     	for (int i=0; i<temp.length; i++) {
     		for (int j=0; j<temp[i].length; j++) {
     			temp[i][j][0]=pixels[i][j];
     		} //makes temp [][][0]=pixels[][]
     	}
-    	System.out.println();
     	int c=0;
-    	for (int count=0; c!=cList[0].length; count++) {
-    		System.out.print(count+" ");
+    	for (int count=0; c!=cList[0].length; count++) { //runs until all colors are only less than 1 distance away from their previous color 
+    		System.out.print(count+" "); //prints the count of the for loop to check how long it takes and if it's still running
 	    	
     		c=0;
 	    	for (int i=0; i<temp.length; i++) {
-	    		for (int j=0; j<temp[i].length; j++) {
-	    			double t=distance(temp[i][j][count%2], cList[0][0]); int index=0;
-					for (int k=1; k<cList[count%2].length; k++) {
-	    				if (distance(temp[i][j][count%2], cList[count%2][k])<t) {
-		    				t=distance(temp[i][j][count%2], cList[count%2][k]);
-		    				index=k;
+	    		for (int j=0; j<temp[i].length; j++) { //goes through every pixel in the temp array 
+	    			double t=distance(temp[i][j][count%2], cList[0][0]); int index=0; //takes the distance of temp[i][j] and alternates between the first and second set of temp pixels
+					for (int k=1; k<cList[count%2].length; k++) { //takes the corresponding color list
+	    				if (distance(temp[i][j][count%2], cList[count%2][k])<t) { //finds minimum distance between the pixel and the color list 
+		    				t=distance(temp[i][j][count%2], cList[count%2][k]); //sets new minimum distance
+		    				index=k; //save index
 	    				}
 	    			}
-	    			temp[i][j][(count+1)%2]=temp[i][j][count%2];
-	    			temp[i][j][count%2]=cList[count%2][index];
+	    			temp[i][j][(count+1)%2]=temp[i][j][count%2]; //saves the next set of temp to be the last set of temp
+	    			temp[i][j][count%2]=cList[count%2][index]; //saves the colors each pixel is closest to
 	    		}
 	    	}
-	    	int[][] avg=new int[n][4];
+	    	int[][] avg=new int[n][4]; //creates array to keep averages 
 	    	for (int i=0; i<temp.length; i++) {
 	    		for (int j=0; j<temp[i].length; j++) {
-	    			for (int k=0; k<cList[0].length; k++) {
-	    				if (temp[i][j][count%2]==cList[count%2][k]) {
-	    					avg[k][0]+=temp[i][j][(count+1)%2].getRed();
+	    			for (int k=0; k<cList[0].length; k++) { //goes through color list 
+	    				if (temp[i][j][count%2]==cList[count%2][k]) { //checks which color the pixel is 
+	    					avg[k][0]+=temp[i][j][(count+1)%2].getRed(); //adds to the green blue and red value
 	    					avg[k][1]+=temp[i][j][(count+1)%2].getGreen();
 	    					avg[k][2]+=temp[i][j][(count+1)%2].getBlue();
-	    					avg[k][3]++;
-	    					break;
+	    					avg[k][3]++; //adds count to that color
+	    					break; //goes to next pixel
 	    				}
 	    			}
 	    		}
 	    	}
 	    	for (int i=0; i<cList[0].length; i++) {
-	    		if (avg[i][3]!=0)
-	    			cList[(count+1)%2][i]=new Color(avg[i][0]/avg[i][3], avg[i][1]/avg[i][3], avg[i][2]/avg[i][3]);
-	    		else 
+	    		if (avg[i][3]!=0) //sets color list to new colors that are the averages of the clusters if there is at least 1 color in the list
+	    			cList[(count+1)%2][i]=new Color(avg[i][0]/avg[i][3], avg[i][1]/avg[i][3], avg[i][2]/avg[i][3]); 
+	    		else //sets color to black if there are no values in the cluster
 	    			cList[(count+1)%2][i]=Color.black;
-	    		if (distance(cList[count%2][i],cList[(count+1)%2][i])<1) {
+	    		if (distance(cList[count%2][i],cList[(count+1)%2][i])<1) //checks if previous color and current color are less than 1 distance away
 	    			c++;
-	    		}
 	    	}
-    		prev=count;
+    		prev=count; //sets variable to keep track of which set of pixels to use
     	}
     	
     	for (int i=0; i<pixels.length; i++) {
     		for (int j=0; j<pixels[i].length; j++) {
-    			pixels[i][j]=temp[i][j][prev%2];
+    			pixels[i][j]=temp[i][j][prev%2]; //fills in pixels with the new n colors 
     		}
     	}
     }
@@ -203,7 +176,7 @@ public class Photoshop extends Component {
     // use the 3d distance formula to calculate
     public double distance(Color c1, Color c2) {	
 		return Math.sqrt(Math.pow((c1.getRed()-c2.getRed()),2)+Math.pow((c1.getGreen()-c2.getGreen()),2)+Math.pow((c1.getBlue()-c2.getBlue()),2));	
-    }
+    } 
     
     // this blurs the image
     // to do this: at each pixel, sum the 8 surrounding pixels' rgb values 
@@ -212,40 +185,39 @@ public class Photoshop extends Component {
     public void blur(int n) { //n=blur degree
 		outputName = "blurred_" + outputName;
 		Color[][]temp=new Color[pixels.length][]; 
-		for (int i=0; i<pixels.length; i++) {
-			temp[i]=new Color[pixels[i].length];
+		for (int i=0; i<pixels.length; i++) { 
+			temp[i]=new Color[pixels[i].length]; //sets each temp row to be the same length as pixels[i]
         	for (int j=0; j<pixels[i].length; j++) { //goes through every pixel
         		int r=0,g=0,b=0;
-        		if (i>=n&&i<pixels.length-n&&j>=n&&j<pixels[i].length-n) {
+        		if (i>=n&&i<pixels.length-n&&j>=n&&j<pixels[i].length-n) { //checks if the pixel isn't on the edge
 	        		for (int k=n; k>=-n; k--) {
-	        			for (int x=n; x>=-n; x--) {
+	        			for (int x=n; x>=-n; x--) { //sums values of n neighbors from the pixel on each side (2n+1 by 2n+1 square)
 	        				r+=pixels[i-k][j-x].getRed();
 	        				g+=pixels[i-k][j-x].getGreen();
 	        				b+=pixels[i-k][j-x].getBlue();
 	        			}
 	        		}
-	        		temp[i][j]=new Color((int)(r/Math.pow(2*n+1,2)), (int)(g/Math.pow(2*n+1,2)), (int)(b/Math.pow(2*n+1,2)));
+	        		temp[i][j]=new Color((int)(r/Math.pow(2*n+1,2)), (int)(g/Math.pow(2*n+1,2)), (int)(b/Math.pow(2*n+1,2))); //pixel value after being "blurred" (divides sum by 2n+1^2)
         		}
         		
-        		else {
+        		else { //if it's on the edge of the image
         			int x = 0, y=0;
-        			for (x=Math.max(0, i-n); x<Math.min(pixels.length, i+n); x++) {
+        			for (x=Math.max(0, i-n); x<Math.min(pixels.length, i+n); x++) { //goes to the max distance of n or the last thing in bounds
         				for (y=Math.max(0, j-n); y<Math.min(pixels[i].length, j+n); y++) {
         					r+=pixels[x][y].getRed();
 							g+=pixels[x][y].getGreen();
 							b+=pixels[x][y].getBlue();
-        				}
+        				} 
         			}
-        			int x1=Math.max(0, i-n), y1=Math.max(0, j-n);
-        			int div=(x-x1)*(y-y1);
-        			temp[i][j]=new Color(r/div, g/div, b/div);
+        			int x1=Math.max(0, i-n), y1=Math.max(0, j-n); //gets values of the side lengths
+        			int div=(x-x1)*(y-y1); //sets the division factor to the side length x by side length y
+        			temp[i][j]=new Color(r/div, g/div, b/div); //divides each sum by the size of their square
         		}
         	}
         }
 		for (int i=0; i<pixels.length; i++) {
         	for (int j=0; j<pixels[i].length; j++) {
-//        		pixels[i][j]=temp[i][j] == null ? new Color(255,255,255): temp[i][j];
-        		pixels[i][j]=temp[i][j];
+        		pixels[i][j]=temp[i][j]; //sets the pixels to the blurred version
         	}
 		}
 	}
@@ -261,62 +233,62 @@ public class Photoshop extends Component {
 			temp[i]=new Color[pixels[i].length];
         	for (int j=1; j<pixels[i].length-1; j++) { //goes through every pixel
         		int r=0,g=0,b=0, r1=0, g1=0, b1=0;
-        		for (int k=i-1; k<=i+1; k++) {
-        			for (int x=j-1; x<=j+1; x++) {
-        				if (k==i&&x==j) {
+        		for (int k=i-1; k<=i+1; k++) { 
+        			for (int x=j-1; x<=j+1; x++) { //draws 3x3 square around curr pixel
+        				if (k==i&&x==j) { //if it's the center (current) pixel, set it to a separate value and multiply it by 8
         					r1=pixels[k][x].getRed()*8;
             				g1=pixels[k][x].getGreen()*8;
             				b1=pixels[k][x].getBlue()*8;
-            				continue;
+            				continue; //skip to next pixel
         				}
-        				r+=pixels[k][x].getRed();
+        				r+=pixels[k][x].getRed(); //sum all the rgb of other pixels
         				g+=pixels[k][x].getGreen();
         				b+=pixels[k][x].getBlue();
         			}
-        			temp[i][j]=new Color((Math.max(Math.min(r1+r*-1, 255),0)), (Math.max(Math.min(g1+g*-1, 255),0)), (Math.max(Math.min(b1+b*-1, 255),0)));
+        			temp[i][j]=new Color((Math.max(Math.min(r1+r*-1, 255),0)), (Math.max(Math.min(g1+g*-1, 255),0)), (Math.max(Math.min(b1+b*-1, 255),0))); //uses edge formula for new color values
         		}
         	}
         }
         for (int i=1; i<pixels.length-1; i++) {
         	for (int j=1; j<pixels[i].length-1; j++) {
-        		pixels[i][j]=temp[i][j];
+        		pixels[i][j]=temp[i][j]; //sets to edged values
         	}
         }
     }
     
-    public void sharpen() {
+    public void sharpen() { //sharpens image using sharpen kernel (-1, -1, +5, -1, -1)
         outputName = "sharpened_" + outputName;
-        Color[][]temp=new Color[pixels.length][]; 
+        Color[][]temp=new Color[pixels.length][]; //creates temp array to hold new values
         for (int i=1; i<pixels.length-1; i++) {
 			temp[i]=new Color[pixels[i].length];
         	for (int j=1; j<pixels[i].length-1; j++) { //goes through every pixel
         		int r=0,g=0,b=0;
-        		r+=pixels[i-1][j].getRed(); g+=pixels[i-1][j].getGreen(); b+=pixels[i-1][j].getBlue();
+        		r+=pixels[i-1][j].getRed(); g+=pixels[i-1][j].getGreen(); b+=pixels[i-1][j].getBlue(); 
         		r+=pixels[i+1][j].getRed(); g+=pixels[i+1][j].getGreen(); b+=pixels[i+1][j].getBlue();
         		r+=pixels[i][j-1].getRed(); g+=pixels[i][j-1].getGreen(); b+=pixels[i][j-1].getBlue();
         		r+=pixels[i][j+1].getRed(); g+=pixels[i][j+1].getGreen(); b+=pixels[i][j+1].getBlue();
-        		r*=-1; g*=-1; b*=-1;
+        		r*=-1; g*=-1; b*=-1; //sums pixels 1 above, 1 left, 1 right, 1 below and multiples by -1
         		r+=pixels[i][j].getRed()*5;
         		g+=pixels[i][j].getGreen()*5;
-        		b+=pixels[i][j].getBlue()*5;
-    			temp[i][j]=new Color((Math.max(Math.min(r, 255),0)), (Math.max(Math.min(g, 255),0)), (Math.max(Math.min(b, 255),0)));
+        		b+=pixels[i][j].getBlue()*5; //gets current pixel and multiplies by 5
+    			temp[i][j]=new Color((Math.max(Math.min(r, 255),0)), (Math.max(Math.min(g, 255),0)), (Math.max(Math.min(b, 255),0))); //new value using sharpen kernel formula
         	}
         }
         for (int i=1; i<pixels.length-1; i++) {
         	for (int j=1; j<pixels[i].length-1; j++) {
-        		pixels[i][j]=temp[i][j];
+        		pixels[i][j]=temp[i][j]; //sets pixels to sharpened values
         	}
         }
     }
     
-    public void rotate() {
+    public void rotate() { //rotates image 90 degrees clockwise
     	 outputName = "rotated_" + outputName;
-         Color[][]temp=pixels;
-         pixels=new Color[temp[0].length][temp.length]; 
+         Color[][]temp=pixels; //creates a temp array that contains the original image
+         pixels=new Color[temp[0].length][temp.length]; //sets pixels to new dimensions
          for (int i=0; i<pixels.length; i++) {
         	 for (int j=temp.length-1, k=0; j>=0; j--, k++) {
         		 pixels[i][k]=temp[j][i];
-        	 }
+        	 } //goes through every column from bottom to top and places it from left to right on pixel's corresponding row
          }
     }
    
@@ -399,7 +371,7 @@ public class Photoshop extends Component {
 			
 	        in.close();
 	        BufferedImage new_image = new BufferedImage(pixels[0].length,
-                    pixels.length, BufferedImage.TYPE_INT_ARGB);
+                    pixels.length, BufferedImage.TYPE_INT_ARGB); //declares new_image as a new buffered image with new dimensions after actions/user inputs
 	        // turns our 2d array of colors into a new png file
 	        create_new_image(new_image);
 	        File output_file = new File("Images/" + outputName);
@@ -424,8 +396,8 @@ public class Photoshop extends Component {
     }
 
     public void create_new_image(BufferedImage new_image) {
-    	w=new_image.getWidth();
-    	h=new_image.getHeight();
+    	w=new_image.getWidth(); 
+    	h=new_image.getHeight(); //sets width and height variables to new image width and height
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
             		new_image.setRGB(j, i, pixels[i][j].getRGB());
