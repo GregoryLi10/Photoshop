@@ -15,8 +15,8 @@ public class Deck {
 	
 	public String toString() {
 		String s="";
-		for (Card a:deck) 
-			s+=a+", ";
+		for (Card a:deck)
+			s+=a+" ";
 		return s;
 	}
 	
@@ -32,21 +32,36 @@ public class Deck {
 		return a;
 	}
 	
-	public void shuffle() {
-//		Card[] temp=new Card[deck.length];
-//		for (int i=temp.length-1; i>=0; i--) {
-//			(int)(Math.random()*5+1)
-//			temp[i]=deck[deck.length/(i%2+1)-i/2-1];
-//		}
-//		deck=temp;
+	public void shuffle(int n) {
+		Card[] temp=new Card[deck.length];
+		for (int j=0; j<n; j++) {
+			Card[][] split=new Card[2][26];
+			split[0]=Arrays.copyOfRange(deck, 0, 26);
+			split[1]=Arrays.copyOfRange(deck, 26, temp.length);
+			int ind1=25, ind2=25;
+			for (int i=temp.length-1; i>=0; i--) {
+				int c=(int)(Math.random()*2);
+				if (c==0&&ind1>=0) {
+					temp[i]=split[c][ind1]; ind1--;
+				}
+				else if (c==1&&ind2>=0){
+					temp[i]=split[c][ind2]; ind2--;
+				}
+				else {
+					i++;
+				}
+			}
+			deck=temp;
+		}
 	}
 	
 	public void sort() {
 		for (int i=0; i<deck.length; i++) {
-			int k=i;
+			int k=i; int t=deck[i].getVal();
 			for (int j=i+1; j<deck.length; j++) {
-				if (deck[j].getVal()<deck[i].getVal()) {
+				if (deck[j].getVal()<t) {
 					k=j;
+					t=deck[j].getVal();
 				}
 			}
 			Card temp=deck[i];
@@ -57,12 +72,13 @@ public class Deck {
 	
 	public static void main (String[] args) {
 		Deck a=new Deck();
-//		System.out.println(a);
-//		System.out.println(a.getRandom());
-//		System.out.println(Arrays.toString(a.getFirstN(5)));
-//		System.out.println(a);
+		System.out.println(a);
+		System.out.println(a.getRandom());
+		System.out.println(Arrays.toString(a.getFirstN(5)));
 		a.sort();
-//		System.out.println(a);
+		System.out.println(a);
+		a.shuffle(10);
+		System.out.println(a);
 		
 	}
 	

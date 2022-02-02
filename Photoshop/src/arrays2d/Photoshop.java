@@ -2,6 +2,9 @@ package arrays2d;
 // Photoshop program that can run several manipulations on 
 // an image
 // filler code by Mr. David
+// 
+// Name: Gregory Li
+// Extra features: kmeans, sharpen, rotate 90 degrees clockwise, blur to n degree?
 
 import java.awt.Color;
 import java.awt.Component;
@@ -319,7 +322,7 @@ public class Photoshop extends Component {
 			
 			// runs the manipulations determined by the user
 			System.out.println("Enter the manipulations you would like to run on the image.\nYour "
-					+ "choices are: brighten, flip, negate, blur, edge, or simplify.\nEnter each "
+					+ "choices are: brighten, flip, negate, blur, edge, simplify, kmeans, rotate, or sharpen.\nEnter each "
 					+ "manipulation you'd like to run, then type in 'done'.");
 			Scanner in = new Scanner(System.in);
 			String action = in.next().toLowerCase();
